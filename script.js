@@ -1,5 +1,5 @@
 const celebrities = [
-    { name: "Barack Obama", image: "President-Barack-Obama.jpg.jpg" },
+    { name: "Barack Obama", image: "President-Barack-Obama.jpg.jpg" }
 ];
 
 let currentIndex = 0;
