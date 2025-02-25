@@ -1,8 +1,5 @@
 const celebrities = [
-    { name: "Leonardo DiCaprio", image: "images/dicaprio.jpg" },
-    { name: "Beyoncé", image: "images/beyonce.jpg" },
-    { name: "Cristiano Ronaldo", image: "images/ronaldo.jpg" },
-    { name: "Emma Watson", image: "images/emmawatson.jpg" }
+    { name: "Barack Obama", image: "President-Barack-Obama.jpg.jpg" },
 ];
 
 let currentIndex = 0;
@@ -20,9 +17,9 @@ function checkAnswer() {
 
     if (userInput === correctName) {
         score++;
-        document.getElementById("feedback").textContent = "? Bonne réponse !";
+        document.getElementById("feedback").textContent = "? Bonne rÃ©ponse !";
     } else {
-        document.getElementById("feedback").textContent = `? Mauvaise réponse ! C'était ${celebrities[currentIndex].name}`;
+        document.getElementById("feedback").textContent = `? Mauvaise rÃ©ponse ! C'Ã©tait ${celebrities[currentIndex].name}`;
     }
 
     document.getElementById("score").textContent = score;
@@ -33,5 +30,5 @@ function nextCelebrity() {
     loadCelebrity();
 }
 
-// Charger la première image au début
+// Charger la premiÃ¨re image au dÃ©but
 window.onload = loadCelebrity;
