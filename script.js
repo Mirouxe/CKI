@@ -17,9 +17,9 @@ function checkAnswer() {
 
     if (userInput === correctName) {
         score++;
-        document.getElementById("feedback").textContent = "? Bonne réponse !";
+        document.getElementById("feedback").textContent = "Bonne réponse !";
     } else {
-        document.getElementById("feedback").textContent = `? Mauvaise réponse ! C'était ${celebrities[currentIndex].name}`;
+        document.getElementById("feedback").textContent = `Mauvaise réponse ! C'était ${celebrities[currentIndex].name}`;
     }
 
     document.getElementById("score").textContent = score;
