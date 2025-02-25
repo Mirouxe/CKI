@@ -3,77 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu du Clic</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            color: #333;
-        }
-        canvas {
-            background-color: white;
-            border: 2px solid black;
-        }
-        #score {
-            font-size: 20px;
-            font-weight: bold;
-        }
-    </style>
+    <title>Devine la Célébrité</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Jeu du Clic sur le Cercle ??</h1>
+    <h1>Devine la Célébrité 🌟</h1>
     <p>Score : <span id="score">0</span></p>
-    <canvas id="gameCanvas"></canvas>
-
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const scoreDisplay = document.getElementById("score");
-
-        // Taille du canvas
-        canvas.width = 600;
-        canvas.height = 400;
-
-        // Variables du jeu
-        let score = 0;
-        let circle = { x: 100, y: 100, radius: 30 };
-
-        // Dessiner le cercle
-        function drawCircle() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "red";
-            ctx.beginPath();
-            ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Changer la position du cercle
-        function moveCircle() {
-            circle.x = Math.random() * (canvas.width - 60) + 30;
-            circle.y = Math.random() * (canvas.height - 60) + 30;
-            drawCircle();
-        }
-
-        // Vérifier le clic sur le cercle
-        canvas.addEventListener("click", function (event) {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
-
-            const distance = Math.sqrt((clickX - circle.x) ** 2 + (clickY - circle.y) ** 2);
-
-            if (distance < circle.radius) {
-                score++;
-                scoreDisplay.textContent = score;
-                moveCircle();
-            }
-        });
-
-        // Lancer le jeu
-        drawCircle();
-    </script>
+    <div class="game-container">
+        <img id="celebrity-image" src="" alt="Image de célébrité">
+        <input type="text" id="user-input" placeholder="Entrez un nom">
+        <button onclick="checkAnswer()">Valider</button>
+        <button onclick="nextCelebrity()">Suivant</button>
+        <p id="feedback"></p>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
