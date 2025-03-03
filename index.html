@@ -1,21 +1,34 @@
-<script src="script.js?v=4"></script>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CKI</title>
-    <link rel="stylesheet" href="style.css">
+    <title>CKI : Qui est cette célébrité ?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
-    <h1>CKI 🌟</h1>
-    <p>Score : <span id="score">0</span></p>
     <div class="game-container">
-        <img id="celebrity-image" src="" alt="Image de célébrité">
-        <input type="text" id="user-input" placeholder="Entrez un nom">
-        <button onclick="checkAnswer()">Valider</button>
-        <button onclick="nextCelebrity()">Suivant</button>
-        <p id="feedback"></p>
+        <h1>CKI : Qui est cette célébrité ?</h1>
+        <div class="game-content">
+            <div class="image-container">
+                <img id="celebrity-image" src="" alt="Image de célébrité">
+                <p id="zoom-count"></p>
+            </div>
+            <div class="game-controls">
+                <p>Score actuel : <span id="score">0</span></p>
+                <div class="controls">
+                    <input type="text" id="user-input" placeholder="Entrez le nom de la célébrité">
+                    <button id="submit-btn">Valider</button>
+                    <button id="dezoom-btn">Dézoomer</button>
+                    <button id="hint-btn">Demander un indice</button>
+                    <button id="next-btn">Célébrité suivante</button>
+                </div>
+                <p id="feedback"></p>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
