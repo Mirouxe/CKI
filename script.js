@@ -11,7 +11,7 @@ async function loadCelebrities() {
         celebrities = [
             "tom hanks",
             "quentin tarantino",
-            "Jorge Mario Bergoglio",
+            "jorge mario bergoglio",
             "bruce lee",
             "brad pitt"
         ];
@@ -58,14 +58,19 @@ function loadNextCelebrity() {
         console.error(`Impossible de charger l'image pour ${currentCelebrity}`);
         loadNextCelebrity(); // Passer à la célébrité suivante si l'image n'existe pas
     };
-    img.src = `images/${currentCelebrity.replace(" ", "_")}/zoom${currentZoomLevel}.jpg`;
+    img.src = `images/${formatImagePath(currentCelebrity)}/zoom${currentZoomLevel}.jpg`;
+}
+
+// Fonction utilitaire pour formater le nom de fichier
+function formatImagePath(name) {
+    return name.toLowerCase().replace(/ /g, "_");
 }
 
 // Mettre à jour l'image avec le niveau de zoom actuel
 function updateImage() {
     const imgElement = document.getElementById("celebrity-image");
-    const timestamp = new Date().getTime(); // Ajouter un timestamp pour éviter la mise en cache
-    imgElement.src = `images/${currentCelebrity.replace(" ", "_")}/zoom${currentZoomLevel}.jpg?v=${timestamp}`;
+    const timestamp = new Date().getTime();
+    imgElement.src = `images/${formatImagePath(currentCelebrity)}/zoom${currentZoomLevel}.jpg?v=${timestamp}`;
 }
 
 // Mettre à jour le compteur de zoom
@@ -93,11 +98,11 @@ function checkAnswer() {
         // Afficher l'image originale
         const imgElement = document.getElementById("celebrity-image");
         const timestamp = new Date().getTime();
-        imgElement.src = `images/${currentCelebrity.replace(" ", "_")}/original.jpg?v=${timestamp}`;
+        imgElement.src = `images/${formatImagePath(currentCelebrity)}/original.jpg?v=${timestamp}`;
         
         // Réactiver le bouton dezoom pour la prochaine célébrité
         document.getElementById("dezoom-btn").disabled = false;
-        setTimeout(loadNextCelebrity, 2500); // Augmenté à 2.5 secondes pour voir l'image originale
+        setTimeout(loadNextCelebrity, 2500);
     } else {
         document.getElementById("feedback").textContent = "Ce n'est pas la bonne réponse, essayez encore !";
         document.getElementById("feedback").style.color = "#dc3545";
@@ -122,7 +127,7 @@ function handleDezoom() {
 // Fonction pour charger et afficher un indice aléatoire
 async function showRandomHint() {
     try {
-        const response = await fetch(`images/${currentCelebrity.replace(" ", "_")}/infos.txt`);
+        const response = await fetch(`images/${formatImagePath(currentCelebrity)}/infos.txt`);
         if (!response.ok) throw new Error('Impossible de charger les indices');
         
         const text = await response.text();
