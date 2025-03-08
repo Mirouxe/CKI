@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "id": 1741290189985,
+      "firstname": "admin",
+      "lastname": "admin",
+      "password": "admin",
+      "score": 0
+    }
+  ],
+  "seen_celebrities": []
+}

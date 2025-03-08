@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6c5ce7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CKI ?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h1 {
+            flex: 1;
+            text-align: center;
+        }
+        .score-container {
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+        }
+        #logout-btn {
+            background-color: var(--accent-color);
+            padding: 0.5rem 1rem;
+        }
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .game-panel {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        .game-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .left-section {
+            flex: 1;
+        }
+        .right-section {
+            flex: 1;
+        }
+        .image-container {
+            text-align: center;
+        }
+        #celebrity-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--border-radius);
+        }
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        #user-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        #submit-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        #submit-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        #submit-btn i {
+            font-size: 1.2rem;
+        }
+        .game-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .action-buttons button {
+            width: 100%;
+            text-align: left;
+            padding: 0.8rem;
+        }
+        #feedback {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+        .leaderboard-panel {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        .leaderboard-panel h2 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        #leaderboard-table {
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        #leaderboard-table th,
+        #leaderboard-table td {
+            padding: 0.5rem;
+            text-align: left;
+        }
+        @media (max-width: 768px) {
+            .game-layout {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                order: 1;
+                margin-bottom: 1rem;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-around;
+                position: relative;
+                padding-top: 1.5rem;
+            }
+            
+            .image-section {
+                order: 2;
+            }
+        }
+        /* Styles supplémentaires pour les boutons d'action */
+        .action-buttons-container {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .action-buttons-container {
+                order: 2;
+                flex: 1;
+                width: auto;
+                max-width: 120px;
+                margin-bottom: 0;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .action-buttons-container {
+                max-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header-container">
+            <div class="header-buttons">
+                <button id="help-btn" class="tooltip" title="Aide">
+                    <i class="fas fa-question-circle"></i>
+                    <span class="tooltip-text top">Afficher l'aide</span>
+                </button>
+            </div>
+            <h1>CKI ?</h1>
+            <div class="header-buttons">
+                <button id="logout-btn" class="tooltip">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="tooltip-text top">Se déconnecter</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Conteneur pour les tooltips d'aide -->
+        <div id="help-tooltips">
+            <div id="dezoom-tooltip" class="help-tooltip">
+                <i class="fas fa-search-minus"></i>
+                <p>Ce bouton vous permet de voir plus de détails de l'image pour mieux identifier la célébrité. <strong>Attention</strong> : chaque utilisation vous fait perdre <span class="penalty">2 points</span>.</p>
+            </div>
+            <div id="hint-tooltip" class="help-tooltip">
+                <i class="fas fa-lightbulb"></i>
+                <p>Ce bouton vous donne un indice sur la célébrité à identifier. <strong>Attention</strong> : chaque indice vous fait perdre <span class="penalty">3 points</span>.</p>
+            </div>
+            <div id="next-tooltip" class="help-tooltip">
+                <i class="fas fa-forward"></i>
+                <p>Ce bouton vous permet de passer à la célébrité suivante si vous êtes bloqué. Vous pourrez revoir cette célébrité plus tard jusqu'à ce que vous la trouviez.</p>
+            </div>
+            <div id="score-tooltip" class="help-tooltip">
+                <i class="fas fa-trophy"></i>
+                <p>Votre score augmente de <span class="bonus">10 points</span> pour chaque célébrité correctement identifiée. Utilisez les aides avec parcimonie pour maximiser votre score !</p>
+            </div>
+        </div>
+
+        <div class="game-content">
+            <div class="game-panel">
+                <div class="game-layout">
+                    <div class="image-section">
+                        <div class="image-container">
+                            <img id="celebrity-image" src="" alt="Image de célébrité">
+                            <p id="zoom-count"></p>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="user-input" placeholder="Entrez le nom de la célébrité" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                            <button id="submit-btn" class="tooltip" title="Valider">
+                                <i class="fas fa-check"></i>
+                                <span class="tooltip-text top">Valider votre réponse</span>
+                            </button>
+                        </div>
+                        <div class="score-display" data-score="0">0</div>
+                    </div>
+                    <div class="action-buttons-container">
+                        <div class="action-buttons" data-score="0">
+                            <button id="dezoom-btn" aria-label="Dézoom">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button id="hint-btn" aria-label="Indice">
+                                <i class="fas fa-lightbulb"></i>
+                            </button>
+                            <button id="next-btn" aria-label="Suivant">
+                                <i class="fas fa-forward"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <p id="feedback"></p>
+            </div>
+
+            <div class="leaderboard-panel">
+                <h2>Classement</h2>
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Joueur</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

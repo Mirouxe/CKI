@@ -1,0 +1,18 @@
+# Dépendances
+/node_modules
+/package-lock.json
+
+# Fichiers de logs
+logs
+*.log
+npm-debug.log*
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers d'éditeur
+.idea/
+.vscode/
+*.swp
+*.swo

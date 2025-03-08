@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Administration - Base de données</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        .admin-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #4a6fa5;
+        }
+
+        .section {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .section h2 {
+            color: #4a6fa5;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .refresh-btn {
+            background-color: #28a745;
+        }
+
+        .refresh-btn:hover {
+            background-color: #218838;
+        }
+
+        .danger-btn {
+            background-color: #dc3545;
+        }
+
+        .danger-btn:hover {
+            background-color: #c82333;
+        }
+
+        .confirmation {
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .confirmation p {
+            margin-bottom: 1rem;
+            color: #dc2626;
+        }
+
+        .confirmation .button-group {
+            margin-bottom: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #4a6fa5;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .delete-user-btn {
+            background-color: #dc3545;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
+        .delete-user-btn:hover {
+            background-color: #c82333;
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #4a6fa5;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .celebrity-card {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .celebrity-card h3 {
+            color: #4a6fa5;
+            margin-bottom: 0.5rem;
+        }
+
+        .celebrity-card .found-by {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .back-btn {
+            background-color: #4a6fa5;
+            margin-bottom: 2rem;
+        }
+
+        .back-btn:hover {
+            background-color: #3a5a8f;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Administration</h1>
+            <p>Gestion de la base de données du jeu</p>
+        </div>
+
+        <button class="back-btn" onclick="window.location.href='/'"><i class="fas fa-arrow-left"></i> Retour au jeu</button>
+
+        <div class="section">
+            <h2><i class="fas fa-database"></i> Base de données</h2>
+            <div class="button-group">
+                <button class="refresh-btn" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Rafraîchir les données</button>
+                <button class="danger-btn" onclick="confirmResetDatabase()"><i class="fas fa-trash-alt"></i> Réinitialiser la base de données</button>
+            </div>
+            <div id="reset-confirmation" class="confirmation">
+                <p><i class="fas fa-exclamation-triangle"></i> Attention ! Cette action va supprimer toutes les données et réinitialiser la base de données. Cette action est irréversible.</p>
+                <div class="button-group">
+                    <button class="danger-btn" onclick="resetDatabase()"><i class="fas fa-check"></i> Confirmer</button>
+                    <button class="refresh-btn" onclick="cancelResetDatabase()"><i class="fas fa-times"></i> Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-users"></i> Utilisateurs</h2>
+            <div class="button-group">
+                <button class="danger-btn" onclick="confirmClearUsers()"><i class="fas fa-user-slash"></i> Supprimer tous les utilisateurs</button>
+            </div>
+            <div id="clear-users-confirmation" class="confirmation">
+                <p><i class="fas fa-exclamation-triangle"></i> Attention ! Cette action va supprimer tous les utilisateurs. Cette action est irréversible.</p>
+                <div class="button-group">
+                    <button class="danger-btn" onclick="clearUsers()"><i class="fas fa-check"></i> Confirmer</button>
+                    <button class="refresh-btn" onclick="cancelClearUsers()"><i class="fas fa-times"></i> Annuler</button>
+                </div>
+            </div>
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-history"></i> Historique des célébrités</h2>
+            <div class="button-group">
+                <button class="danger-btn" onclick="confirmClearSeenCelebrities()"><i class="fas fa-eraser"></i> Nettoyer l'historique des célébrités</button>
+            </div>
+            <div id="clear-seen-celebrities-confirmation" class="confirmation">
+                <p><i class="fas fa-exclamation-triangle"></i> Attention ! Cette action va supprimer tout l'historique des célébrités vues. Cette action est irréversible.</p>
+                <div class="button-group">
+                    <button class="danger-btn" onclick="clearSeenCelebrities()"><i class="fas fa-check"></i> Confirmer</button>
+                    <button class="refresh-btn" onclick="cancelClearSeenCelebrities()"><i class="fas fa-times"></i> Annuler</button>
+                </div>
+            </div>
+            <table id="celebrities-table">
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Célébrité</th>
+                        <th>Date</th>
+                        <th>Trouvé</th>
+                    </tr>
+                </thead>
+                <tbody id="seenCelebritiesTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-chart-bar"></i> Statistiques</h2>
+            <div class="user-stats">
+                <div class="stat-card">
+                    <h3>Utilisateurs</h3>
+                    <div class="value" id="userCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Célébrités trouvées</h3>
+                    <div class="value" id="foundCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Célébrités vues</h3>
+                    <div class="value" id="seenCount">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+        });
+
+        // Fonction pour rafraîchir les données
+        async function refreshData() {
+            try {
+                const response = await fetch('/test-db');
+                const data = await response.json();
+                
+                // Mettre à jour les statistiques
+                document.getElementById('userCount').textContent = data.users.length;
+                document.getElementById('foundCount').textContent = data.seen_celebrities.filter(c => c.found).length;
+                document.getElementById('seenCount').textContent = data.seen_celebrities.length;
+                
+                // Mettre à jour la table des utilisateurs
+                const usersTable = document.getElementById('usersTable');
+                usersTable.innerHTML = '';
+                
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.firstname}</td>
+                        <td>${user.lastname}</td>
+                        <td>${user.score}</td>
+                        <td>
+                            <button class="delete-user-btn" onclick="deleteUser(${user.id})">
+                                <i class="fas fa-trash-alt"></i> Supprimer
+                            </button>
+                        </td>
+                    `;
+                    usersTable.appendChild(row);
+                });
+                
+                // Mettre à jour la table des célébrités vues
+                const seenCelebritiesTable = document.getElementById('seenCelebritiesTable');
+                seenCelebritiesTable.innerHTML = '';
+                
+                data.seen_celebrities.forEach(seen => {
+                    const date = new Date(seen.seen_date).toLocaleString();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${seen.user_name}</td>
+                        <td>${seen.celebrity_name}</td>
+                        <td>${date}</td>
+                        <td>${seen.found ? '<i class="fas fa-check" style="color: green;"></i>' : '<i class="fas fa-times" style="color: red;"></i>'}</td>
+                    `;
+                    seenCelebritiesTable.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+                alert('Erreur lors du chargement des données');
+            }
+        }
+
+        // Fonctions de confirmation
+        function confirmResetDatabase() {
+            document.getElementById('reset-confirmation').style.display = 'block';
+        }
+
+        function cancelResetDatabase() {
+            document.getElementById('reset-confirmation').style.display = 'none';
+        }
+
+        function confirmClearUsers() {
+            document.getElementById('clear-users-confirmation').style.display = 'block';
+        }
+
+        function cancelClearUsers() {
+            document.getElementById('clear-users-confirmation').style.display = 'none';
+        }
+
+        function confirmClearSeenCelebrities() {
+            document.getElementById('clear-seen-celebrities-confirmation').style.display = 'block';
+        }
+
+        function cancelClearSeenCelebrities() {
+            document.getElementById('clear-seen-celebrities-confirmation').style.display = 'none';
+        }
+
+        // Fonctions d'action
+        async function resetDatabase() {
+            try {
+                const response = await fetch('/admin/reset-db', { method: 'POST' });
+                if (response.ok) {
+                    alert('Base de données réinitialisée avec succès');
+                    refreshData();
+                } else {
+                    alert('Erreur lors de la réinitialisation');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la réinitialisation:', error);
+                alert('Erreur lors de la réinitialisation');
+            }
+            cancelResetDatabase();
+        }
+
+        async function clearUsers() {
+            try {
+                const response = await fetch('/admin/clear-users', { method: 'POST' });
+                if (response.ok) {
+                    alert('Tous les utilisateurs ont été supprimés avec succès');
+                    refreshData();
+                } else {
+                    alert('Erreur lors de la suppression des utilisateurs');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la suppression des utilisateurs:', error);
+                alert('Erreur lors de la suppression des utilisateurs');
+            }
+            cancelClearUsers();
+        }
+
+        async function clearSeenCelebrities() {
+            try {
+                const response = await fetch('/admin/clear-seen-celebrities', { method: 'POST' });
+                if (response.ok) {
+                    alert('Historique des célébrités nettoyé avec succès');
+                    refreshData();
+                } else {
+                    alert('Erreur lors du nettoyage de l\'historique');
+                }
+            } catch (error) {
+                console.error('Erreur lors du nettoyage de l\'historique:', error);
+                alert('Erreur lors du nettoyage de l\'historique');
+            }
+            cancelClearSeenCelebrities();
+        }
+
+        async function deleteUser(userId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+                try {
+                    const response = await fetch(`/admin/delete-user/${userId}`, { method: 'POST' });
+                    if (response.ok) {
+                        alert('Utilisateur supprimé avec succès');
+                        refreshData();
+                    } else {
+                        alert('Erreur lors de la suppression de l\'utilisateur');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+                    alert('Erreur lors de la suppression de l\'utilisateur');
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
