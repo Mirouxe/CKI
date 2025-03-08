@@ -442,10 +442,36 @@ async function checkAnswer() {
                 // Afficher un message de succès
                 document.getElementById('feedback').innerHTML = `<i class="fas fa-check-circle" style="color: var(--success-color);"></i> Bravo ! C'est bien <strong>${currentCelebrity}</strong>. <span class="bonus">+${POINTS.CORRECT_ANSWER} points</span>`;
                 
-                // Charger la prochaine célébrité après un court délai
+                // Afficher l'image originale pendant 3 secondes
+                const imgElement = document.getElementById('celebrity-image');
+                const timestamp = new Date().getTime();
+                const originalImagePath = `images/${formatImagePath(currentCelebrity)}/original.jpg?t=${timestamp}`;
+                
+                // Sauvegarder l'image actuelle
+                const currentImageSrc = imgElement.src;
+                
+                // Ajouter une classe de transition pour un effet de fondu
+                imgElement.classList.add('reveal-transition');
+                
+                // Charger l'image originale
+                imgElement.src = originalImagePath;
+                
+                // Ajouter un message indiquant que l'image originale est affichée
+                const zoomCountElement = document.getElementById('zoom-count');
+                const originalZoomText = zoomCountElement.textContent;
+                zoomCountElement.textContent = "Image originale";
+                
+                // Charger la prochaine célébrité après un délai de 3 secondes
                 setTimeout(() => {
+                    // Retirer la classe de transition
+                    imgElement.classList.remove('reveal-transition');
+                    
+                    // Restaurer le texte du zoom
+                    zoomCountElement.textContent = originalZoomText;
+                    
+                    // Passer à la célébrité suivante
                     loadNextCelebrity();
-                }, 1500);
+                }, 3000);
             }
         } catch (error) {
             console.error('Erreur lors de la validation de la réponse:', error);
@@ -507,21 +533,21 @@ function showTemporaryTooltips() {
             // Afficher le tooltip actuel
             tooltip.classList.add('visible');
             tooltip.classList.add('animated');
-        }, index * 6000); // 6 secondes par tooltip (augmenté de 4 à 6 secondes)
+        }, index * 4000); // 4 secondes par tooltip (réduit de 6 à 4 secondes car les textes sont plus courts)
     });
     
-    // Masquer tous les tooltips après 24 secondes (4 tooltips * 6 secondes)
+    // Masquer tous les tooltips après 16 secondes (4 tooltips * 4 secondes)
     setTimeout(() => {
         tooltips.forEach(tooltip => {
             tooltip.classList.remove('visible');
             tooltip.classList.remove('animated');
         });
         
-        // Masquer le conteneur
+        // Masquer le conteneur après un court délai
         setTimeout(() => {
             helpTooltips.style.display = 'none';
         }, 500);
-    }, 24000);
+    }, 16000);
 }
 
 // Fonction pour initialiser les événements

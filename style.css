@@ -22,6 +22,7 @@
     --button-size-mobile: 36px;
     --button-size-tablet: 45px;
     --button-size-desktop: 50px;
+    --reveal-transition: all 0.5s ease-in-out;
 }
 
 /* Reset et styles de base */
@@ -532,6 +533,25 @@ h1 {
 
 .score-display.score-updated {
     animation: scoreGlow 1s ease;
+}
+
+/* Effet de transition pour l'image originale */
+.reveal-transition {
+    transition: var(--reveal-transition);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(108, 92, 231, 0.6);
+    border: 2px solid #6c5ce7;
+}
+
+/* Animation de pulsation pour l'image originale */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.reveal-transition {
+    animation: pulse 1.5s infinite;
 }
 
 /* Très petits écrans */
