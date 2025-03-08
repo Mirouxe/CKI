@@ -1,10 +1,14 @@
 const express = require('express');
 const path = require('path');
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const app = express();
+require('dotenv').config();
+
+// Importer les modèles et la connexion MongoDB
+const connectDB = require('./models/db');
+const User = require('./models/User');
+const SeenCelebrity = require('./models/SeenCelebrity');
 
 // Configuration du middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -20,39 +24,30 @@ app.use(session({
     }
 }));
 
-// Initialisation de la base de données
-const adapter = new FileSync('db.json');
-const db = low(adapter);
-
-// Définir la structure par défaut de la base de données
-db.defaults({
-    users: [],
-    seen_celebrities: []
-}).write();
-
 // Création du compte admin s'il n'existe pas
-const createAdminAccount = () => {
-    const adminExists = db.get('users')
-        .find({ firstname: 'admin', lastname: 'admin' })
-        .value();
+const createAdminAccount = async () => {
+    try {
+        const adminExists = await User.findOne({ 
+            firstname: 'admin', 
+            lastname: 'admin' 
+        });
 
-    if (!adminExists) {
-        console.log('Création du compte admin...');
-        db.get('users')
-            .push({
+        if (!adminExists) {
+            console.log('Création du compte admin...');
+            await User.create({
                 id: Date.now(),
                 firstname: 'admin',
                 lastname: 'admin',
                 password: 'admin',
-                score: 0
-            })
-            .write();
-        console.log('Compte admin créé avec succès');
+                score: 0,
+                isAdmin: true
+            });
+            console.log('Compte admin créé avec succès');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la création du compte admin:', error);
     }
 };
-
-// Appeler la fonction au démarrage
-createAdminAccount();
 
 // Middleware pour logger les requêtes
 app.use((req, res, next) => {
@@ -128,250 +123,262 @@ app.use('/images', requireAuth, (req, res, next) => {
 app.use(express.static(__dirname));
 
 // Route de test pour vérifier la base de données (protégée)
-app.get('/test-db', requireAdmin, (req, res) => {
-    console.log('=== État actuel de la base de données ===');
-    const users = db.get('users').value();
-    const seenCelebrities = db.get('seen_celebrities').value();
-    
-    // Ajouter les informations utilisateur aux célébrités vues
-    const seenCelebritiesWithUserInfo = seenCelebrities.map(seen => {
-        const user = users.find(u => u.id === seen.user_id);
-        return {
-            ...seen,
-            user_name: user ? `${user.firstname} ${user.lastname}` : 'Utilisateur inconnu'
-        };
-    });
-
-    // Calculer les statistiques des célébrités
-    const celebrityStats = {};
-    seenCelebrities.forEach(seen => {
-        if (!celebrityStats[seen.celebrity_name]) {
-            celebrityStats[seen.celebrity_name] = {
-                name: seen.celebrity_name,
-                found_by: []
+app.get('/test-db', requireAdmin, async (req, res) => {
+    try {
+        console.log('=== État actuel de la base de données ===');
+        const users = await User.find({});
+        const seenCelebrities = await SeenCelebrity.find({});
+        
+        // Ajouter les informations utilisateur aux célébrités vues
+        const seenCelebritiesWithUserInfo = await Promise.all(seenCelebrities.map(async seen => {
+            const user = await User.findOne({ id: seen.user_id });
+            return {
+                ...seen.toObject(),
+                user_name: user ? `${user.firstname} ${user.lastname}` : 'Utilisateur inconnu'
             };
-        }
-        const user = users.find(u => u.id === seen.user_id);
-        if (user && !celebrityStats[seen.celebrity_name].found_by.includes(`${user.firstname} ${user.lastname}`)) {
-            celebrityStats[seen.celebrity_name].found_by.push(`${user.firstname} ${user.lastname}`);
-        }
-    });
+        }));
 
-    const celebrityStatsArray = Object.values(celebrityStats).sort((a, b) => b.found_by.length - a.found_by.length);
+        // Calculer les statistiques des célébrités
+        const celebrityStats = {};
+        for (const seen of seenCelebrities) {
+            if (!celebrityStats[seen.celebrity_name]) {
+                celebrityStats[seen.celebrity_name] = {
+                    name: seen.celebrity_name,
+                    found_by: []
+                };
+            }
+            const user = await User.findOne({ id: seen.user_id });
+            if (user && !celebrityStats[seen.celebrity_name].found_by.includes(`${user.firstname} ${user.lastname}`)) {
+                celebrityStats[seen.celebrity_name].found_by.push(`${user.firstname} ${user.lastname}`);
+            }
+        }
 
-    console.log('Utilisateurs:', users);
-    console.log('Célébrités vues:', seenCelebritiesWithUserInfo);
-    console.log('Statistiques des célébrités:', celebrityStatsArray);
-    
-    res.json({
-        users: users,
-        seen_celebrities: seenCelebritiesWithUserInfo,
-        celebrity_stats: celebrityStatsArray
-    });
+        const celebrityStatsArray = Object.values(celebrityStats).sort((a, b) => b.found_by.length - a.found_by.length);
+
+        console.log('Utilisateurs:', users);
+        console.log('Célébrités vues:', seenCelebritiesWithUserInfo);
+        console.log('Statistiques des célébrités:', celebrityStatsArray);
+        
+        res.json({
+            users: users,
+            seen_celebrities: seenCelebritiesWithUserInfo,
+            celebrity_stats: celebrityStatsArray
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des données:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route d'inscription avec logs améliorés
-app.post('/register', (req, res) => {
-    console.log('\n=== Nouvelle tentative d\'inscription ===');
-    console.log('Données reçues:', req.body);
-    const { firstname, lastname, password } = req.body;
-    
-    const existingUser = db.get('users')
-        .find({ firstname, lastname })
-        .value();
+app.post('/register', async (req, res) => {
+    try {
+        console.log('\n=== Nouvelle tentative d\'inscription ===');
+        console.log('Données reçues:', req.body);
+        const { firstname, lastname, password } = req.body;
+        
+        const existingUser = await User.findOne({ firstname, lastname });
 
-    if (existingUser) {
-        console.log('❌ Utilisateur déjà existant:', existingUser);
-        return res.status(400).send('Cet utilisateur existe déjà');
+        if (existingUser) {
+            console.log('❌ Utilisateur déjà existant:', existingUser);
+            return res.status(400).send('Cet utilisateur existe déjà');
+        }
+
+        const newUser = await User.create({
+            id: Date.now(),
+            firstname,
+            lastname,
+            password,
+            score: 0
+        });
+
+        console.log('✅ Nouvel utilisateur créé:', newUser);
+
+        req.session.user = {
+            id: newUser.id,
+            firstname,
+            lastname,
+            score: 0
+        };
+
+        console.log('🔑 Session créée:', req.session.user);
+        res.json({ success: true, redirect: '/' });
+    } catch (error) {
+        console.error('Erreur lors de l\'inscription:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
     }
-
-    const newUser = {
-        id: Date.now(),
-        firstname,
-        lastname,
-        password,
-        score: 0
-    };
-
-    console.log('✅ Nouvel utilisateur à créer:', newUser);
-    
-    db.get('users')
-        .push(newUser)
-        .write();
-
-    console.log('📊 Base de données après inscription:', db.get('users').value());
-
-    req.session.user = {
-        id: newUser.id,
-        firstname,
-        lastname,
-        score: 0
-    };
-
-    console.log('🔑 Session créée:', req.session.user);
-    res.json({ success: true, redirect: '/' });
 });
 
 // Route de connexion avec logs améliorés
-app.post('/login', (req, res) => {
-    console.log('\n=== Nouvelle tentative de connexion ===');
-    console.log('Données reçues:', req.body);
-    const { firstname, lastname, password } = req.body;
-    
-    const user = db.get('users')
-        .find({ firstname, lastname, password })
-        .value();
+app.post('/login', async (req, res) => {
+    try {
+        console.log('\n=== Nouvelle tentative de connexion ===');
+        console.log('Données reçues:', req.body);
+        const { firstname, lastname, password } = req.body;
+        
+        const user = await User.findOne({ firstname, lastname, password });
 
-    if (!user) {
-        console.log('❌ Échec de la connexion: utilisateur non trouvé');
-        return res.status(401).send('Identifiants incorrects');
+        if (!user) {
+            console.log('❌ Échec de la connexion: utilisateur non trouvé');
+            return res.status(401).send('Identifiants incorrects');
+        }
+
+        console.log('✅ Utilisateur trouvé:', user);
+
+        req.session.user = {
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            score: user.score
+        };
+
+        console.log('🔑 Session créée:', req.session.user);
+        
+        // Redirection vers admin.html si l'utilisateur est admin
+        const redirectUrl = (firstname === 'admin' && lastname === 'admin') ? '/admin.html' : '/';
+        console.log('🔄 Redirection vers:', redirectUrl);
+        res.json({ success: true, redirect: redirectUrl });
+    } catch (error) {
+        console.error('Erreur lors de la connexion:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
     }
-
-    console.log('✅ Utilisateur trouvé:', user);
-
-    req.session.user = {
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        score: user.score
-    };
-
-    console.log('🔑 Session créée:', req.session.user);
-    
-    // Redirection vers admin.html si l'utilisateur est admin
-    const redirectUrl = (firstname === 'admin' && lastname === 'admin') ? '/admin.html' : '/';
-    console.log('🔄 Redirection vers:', redirectUrl);
-    res.json({ success: true, redirect: redirectUrl });
 });
 
 // Route pour obtenir les célébrités trouvées
-app.get('/get-found-celebrities', requireAuth, (req, res) => {
-    const foundCelebrities = db.get('seen_celebrities')
-        .filter({ user_id: req.session.user.id, found: true })
-        .map('celebrity_name')
-        .value();
+app.get('/get-found-celebrities', requireAuth, async (req, res) => {
+    try {
+        const foundCelebrities = await SeenCelebrity.find({ 
+            user_id: req.session.user.id, 
+            found: true 
+        }).distinct('celebrity_name');
 
-    res.json({ foundCelebrities });
+        res.json({ foundCelebrities });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des célébrités trouvées:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour obtenir une nouvelle célébrité
-app.get('/get-celebrity', requireAuth, (req, res) => {
-    const seenCelebrities = db.get('seen_celebrities')
-        .filter({ user_id: req.session.user.id })
-        .map('celebrity_name')
-        .value();
+app.get('/get-celebrity', requireAuth, async (req, res) => {
+    try {
+        const seenCelebrities = await SeenCelebrity.find({ 
+            user_id: req.session.user.id 
+        }).distinct('celebrity_name');
 
-    res.json({ seenCelebrities });
+        res.json({ seenCelebrities });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des célébrités vues:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour marquer une célébrité comme trouvée
-app.post('/found-celebrity', requireAuth, (req, res) => {
-    const { celebrityName } = req.body;
+app.post('/found-celebrity', requireAuth, async (req, res) => {
+    try {
+        const { celebrityName } = req.body;
 
-    // Vérifier si la célébrité a déjà été trouvée
-    const existing = db.get('seen_celebrities')
-        .find({ 
+        // Vérifier si la célébrité a déjà été trouvée
+        const existing = await SeenCelebrity.findOne({ 
             user_id: req.session.user.id,
             celebrity_name: celebrityName,
             found: true
-        })
-        .value();
+        });
 
-    if (existing) {
-        return res.status(400).send('Célébrité déjà trouvée');
-    }
+        if (existing) {
+            return res.status(400).send('Célébrité déjà trouvée');
+        }
 
-    // Supprimer toute entrée précédente pour cette célébrité (si elle a été vue mais pas trouvée)
-    db.get('seen_celebrities')
-        .remove({ 
+        // Supprimer toute entrée précédente pour cette célébrité (si elle a été vue mais pas trouvée)
+        await SeenCelebrity.deleteMany({ 
             user_id: req.session.user.id,
             celebrity_name: celebrityName
-        })
-        .write();
+        });
 
-    // Ajouter la célébrité à la liste des trouvées
-    db.get('seen_celebrities')
-        .push({
+        // Ajouter la célébrité à la liste des trouvées
+        await SeenCelebrity.create({
             user_id: req.session.user.id,
             celebrity_name: celebrityName,
-            seen_date: new Date().toISOString(),
+            seen_date: new Date(),
             found: true
-        })
-        .write();
+        });
 
-    // Mettre à jour le score
-    const user = db.get('users')
-        .find({ id: req.session.user.id })
-        .value();
+        // Mettre à jour le score
+        const user = await User.findOne({ id: req.session.user.id });
 
-    // Ajouter 10 points pour une bonne réponse
-    const newScore = (user.score || 0) + 10;
+        // Ajouter 10 points pour une bonne réponse
+        const newScore = (user.score || 0) + 10;
 
-    db.get('users')
-        .find({ id: req.session.user.id })
-        .assign({ score: newScore })
-        .write();
+        await User.updateOne(
+            { id: req.session.user.id },
+            { score: newScore }
+        );
 
-    req.session.user.score = newScore;
+        req.session.user.score = newScore;
 
-    res.json({ 
-        success: true, 
-        newScore: newScore
-    });
+        res.json({ 
+            success: true, 
+            newScore: newScore
+        });
+    } catch (error) {
+        console.error('Erreur lors du marquage d\'une célébrité comme trouvée:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour marquer une célébrité comme vue mais pas trouvée
-app.post('/seen-celebrity', requireAuth, (req, res) => {
-    const { celebrityName } = req.body;
+app.post('/seen-celebrity', requireAuth, async (req, res) => {
+    try {
+        const { celebrityName } = req.body;
 
-    // Vérifier si la célébrité a déjà été trouvée
-    const foundCelebrity = db.get('seen_celebrities')
-        .find({ 
+        // Vérifier si la célébrité a déjà été trouvée
+        const foundCelebrity = await SeenCelebrity.findOne({ 
             user_id: req.session.user.id,
             celebrity_name: celebrityName,
             found: true
-        })
-        .value();
+        });
 
-    // Si déjà trouvée, ne rien faire
-    if (foundCelebrity) {
-        return res.json({ success: true });
-    }
+        // Si déjà trouvée, ne rien faire
+        if (foundCelebrity) {
+            return res.json({ success: true });
+        }
 
-    // Vérifier si la célébrité a déjà été vue
-    const seenCelebrity = db.get('seen_celebrities')
-        .find({ 
+        // Vérifier si la célébrité a déjà été vue
+        const seenCelebrity = await SeenCelebrity.findOne({ 
             user_id: req.session.user.id,
             celebrity_name: celebrityName,
             found: false
-        })
-        .value();
+        });
 
-    // Si déjà vue, ne rien faire
-    if (seenCelebrity) {
-        return res.json({ success: true });
-    }
+        // Si déjà vue, ne rien faire
+        if (seenCelebrity) {
+            return res.json({ success: true });
+        }
 
-    // Ajouter la célébrité à la liste des vues
-    db.get('seen_celebrities')
-        .push({
+        // Ajouter la célébrité à la liste des vues
+        await SeenCelebrity.create({
             user_id: req.session.user.id,
             celebrity_name: celebrityName,
-            seen_date: new Date().toISOString(),
+            seen_date: new Date(),
             found: false
-        })
-        .write();
+        });
 
-    res.json({ success: true });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erreur lors du marquage d\'une célébrité comme vue:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour obtenir le score actuel
-app.get('/get-score', requireAuth, (req, res) => {
-    const user = db.get('users')
-        .find({ id: req.session.user.id })
-        .value();
-
-    res.json({ score: user.score });
+app.get('/get-score', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findOne({ id: req.session.user.id });
+        res.json({ score: user.score });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du score:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route de déconnexion
@@ -387,94 +394,143 @@ app.get('/admin.html', requireAdmin, (req, res) => {
 });
 
 // Routes d'administration de la base de données (protégées)
-app.post('/admin/reset-db', requireAdmin, (req, res) => {
-    console.log('=== Réinitialisation de la base de données ===');
-    db.set('users', []).write();
-    db.set('seen_celebrities', []).write();
-    console.log('✅ Base de données réinitialisée');
-    res.json({ success: true, message: 'Base de données réinitialisée' });
+app.post('/admin/reset-db', requireAdmin, async (req, res) => {
+    try {
+        console.log('=== Réinitialisation de la base de données ===');
+        await User.deleteMany({});
+        await SeenCelebrity.deleteMany({});
+        console.log('✅ Base de données réinitialisée');
+        
+        // Recréer le compte admin
+        await createAdminAccount();
+        
+        res.json({ success: true, message: 'Base de données réinitialisée' });
+    } catch (error) {
+        console.error('Erreur lors de la réinitialisation de la base de données:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
-app.post('/admin/delete-user', requireAdmin, (req, res) => {
-    const { userId } = req.body;
-    console.log('=== Suppression de l\'utilisateur:', userId);
-    
-    // Supprimer l'utilisateur
-    db.get('users')
-        .remove({ id: parseInt(userId) })
-        .write();
-    
-    // Supprimer ses célébrités vues
-    db.get('seen_celebrities')
-        .remove({ user_id: parseInt(userId) })
-        .write();
-    
-    console.log('✅ Utilisateur et ses données supprimés');
-    res.json({ success: true, message: 'Utilisateur supprimé' });
+app.post('/admin/delete-user', requireAdmin, async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log('=== Suppression de l\'utilisateur:', userId);
+        
+        // Supprimer l'utilisateur
+        await User.deleteOne({ id: parseInt(userId) });
+        
+        // Supprimer ses célébrités vues
+        await SeenCelebrity.deleteMany({ user_id: parseInt(userId) });
+        
+        console.log('✅ Utilisateur et ses données supprimés');
+        res.json({ success: true, message: 'Utilisateur supprimé' });
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
-app.post('/admin/clear-seen-celebrities', requireAdmin, (req, res) => {
-    console.log('=== Nettoyage de l\'historique des célébrités vues ===');
-    db.set('seen_celebrities', []).write();
-    console.log('✅ Historique des célébrités vues nettoyé');
-    res.json({ success: true, message: 'Historique des célébrités vues nettoyé' });
+app.post('/admin/clear-seen-celebrities', requireAdmin, async (req, res) => {
+    try {
+        console.log('=== Nettoyage de l\'historique des célébrités vues ===');
+        await SeenCelebrity.deleteMany({});
+        console.log('✅ Historique des célébrités vues nettoyé');
+        res.json({ success: true, message: 'Historique des célébrités vues nettoyé' });
+    } catch (error) {
+        console.error('Erreur lors du nettoyage de l\'historique des célébrités vues:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour obtenir le classement des joueurs
-app.get('/leaderboard', (req, res) => {
-    const users = db.get('users')
-        .value()
-        .filter(user => user.firstname !== 'admin' && user.lastname !== 'admin') // Exclure l'admin
-        .sort((a, b) => (b.score || 0) - (a.score || 0)) // Trier par score décroissant
-        .map((user, index) => ({
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const users = await User.find({ 
+            $or: [
+                { firstname: { $ne: 'admin' } },
+                { lastname: { $ne: 'admin' } }
+            ]
+        })
+        .sort({ score: -1 })
+        .lean();
+
+        const leaderboard = users.map((user, index) => ({
             rank: index + 1,
             firstname: user.firstname,
             lastname: user.lastname,
             score: user.score || 0
         }));
 
-    res.json({ leaderboard: users });
+        res.json({ leaderboard });
+    } catch (error) {
+        console.error('Erreur lors de la récupération du classement:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
 // Route pour mettre à jour le score (pour les pénalités)
-app.post('/update-score', requireAuth, (req, res) => {
-    const { score } = req.body;
-    
-    if (score === undefined) {
-        return res.status(400).send('Score manquant');
+app.post('/update-score', requireAuth, async (req, res) => {
+    try {
+        const { score } = req.body;
+        
+        if (score === undefined) {
+            return res.status(400).send('Score manquant');
+        }
+        
+        // Mettre à jour le score dans la base de données
+        await User.updateOne(
+            { id: req.session.user.id },
+            { score: score }
+        );
+        
+        // Mettre à jour le score dans la session
+        req.session.user.score = score;
+        
+        res.json({ success: true, newScore: score });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du score:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
     }
-    
-    // Mettre à jour le score dans la base de données
-    db.get('users')
-        .find({ id: req.session.user.id })
-        .assign({ score: score })
-        .write();
-    
-    // Mettre à jour le score dans la session
-    req.session.user.score = score;
-    
-    res.json({ success: true, newScore: score });
 });
 
 // Nouvelle route pour supprimer un utilisateur avec l'ID dans l'URL
-app.post('/admin/delete-user/:userId', requireAdmin, (req, res) => {
-    const userId = req.params.userId;
-    console.log('=== Suppression de l\'utilisateur (URL):', userId);
+app.post('/admin/delete-user/:userId', requireAdmin, async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        console.log('=== Suppression de l\'utilisateur (URL):', userId);
 
-    // Supprimer l'utilisateur
-    db.get('users')
-        .remove({ id: parseInt(userId) })
-        .write();
+        // Supprimer l'utilisateur
+        await User.deleteOne({ id: parseInt(userId) });
 
-    // Supprimer ses célébrités vues
-    db.get('seen_celebrities')
-        .remove({ user_id: parseInt(userId) })
-        .write();
+        // Supprimer ses célébrités vues
+        await SeenCelebrity.deleteMany({ user_id: parseInt(userId) });
 
-    res.json({ success: true });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 });
 
-// Démarrer le serveur
-app.listen(3000, '0.0.0.0', () => {
-    console.log('Serveur démarré sur le port 3000');
-}); 
+// Connexion à MongoDB et démarrage du serveur
+const PORT = process.env.PORT || 3000;
+
+const startServer = async () => {
+    try {
+        // Connexion à MongoDB
+        await connectDB();
+        
+        // Création du compte admin
+        await createAdminAccount();
+        
+        // Démarrage du serveur
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Serveur démarré sur le port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Erreur lors du démarrage du serveur:', error);
+        process.exit(1);
+    }
+};
+
+startServer(); 

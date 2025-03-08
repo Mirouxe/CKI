@@ -1,18 +1,20 @@
-# Dépendances
-/node_modules
-/package-lock.json
+# Modules Node.js
+node_modules/
 
-# Fichiers de logs
+# Fichiers d'environnement
+.env
+
+# Logs
 logs
 *.log
 npm-debug.log*
 
-# Fichiers système
+# Fichiers de systÃ¨me d'exploitation
 .DS_Store
 Thumbs.db
 
-# Fichiers d'éditeur
+# Fichiers d'IDE
 .idea/
 .vscode/
-*.swp
-*.swo
+*.sublime-project
+*.sublime-workspace
