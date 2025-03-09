@@ -395,6 +395,8 @@ h1 {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.8rem;
+    max-width: 100%;
+    table-layout: fixed;
 }
 
 #leaderboard-table th,
@@ -402,6 +404,9 @@ h1 {
     padding: 0.4rem;
     text-align: left;
     border-bottom: 1px solid #e0e0e0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #leaderboard-table th {
@@ -417,6 +422,29 @@ h1 {
 
 #leaderboard-table tr:hover {
     background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Définir la largeur des colonnes */
+#leaderboard-table th:nth-child(1),
+#leaderboard-table td:nth-child(1) {
+    width: 15%;
+}
+
+#leaderboard-table th:nth-child(2),
+#leaderboard-table td:nth-child(2) {
+    width: 65%;
+    max-width: 200px;
+}
+
+#leaderboard-table th:nth-child(3),
+#leaderboard-table td:nth-child(3) {
+    width: 20%;
+}
+
+/* Ajouter un titre (tooltip) pour afficher le nom complet au survol */
+#leaderboard-table td:nth-child(2) {
+    position: relative;
+    cursor: default;
 }
 
 /* Tooltips */

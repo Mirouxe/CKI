@@ -495,9 +495,10 @@ async function loadLeaderboard() {
         
         data.leaderboard.forEach(player => {
             const row = document.createElement('tr');
+            const fullName = `${player.firstname} ${player.lastname}`;
             row.innerHTML = `
                 <td>${player.rank}</td>
-                <td>${player.firstname} ${player.lastname}</td>
+                <td title="${fullName}">${fullName}</td>
                 <td>${player.score}</td>
             `;
             tbody.appendChild(row);
